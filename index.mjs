@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(methodOverride('_method'));
 // Expose the files stored in the public folder
 app.use(express.static('public'));
+// Bind body parser middleware to read data from AJAX POST request
 app.use(express.json());
 
 // Bind route definitions to the Express application
