@@ -191,6 +191,8 @@ export default function initGamesController(db) {
     const newGame = {
       gameState: {
         cardDeck,
+        player1Name,
+        player2Name,
       },
     };
 
@@ -238,6 +240,8 @@ export default function initGamesController(db) {
             gameState: {
               cardDeck: game.gameState.cardDeck,
               player1Hand,
+              player1Name: game.gameState.player1Name,
+              player2Name: game.gameState.player2Name,
             },
           });
         } else {
@@ -246,6 +250,8 @@ export default function initGamesController(db) {
               cardDeck: game.gameState.cardDeck,
               player1Hand,
               player2Hand: game.gameState.player2Hand,
+              player1Name: game.gameState.player1Name,
+              player2Name: game.gameState.player2Name,
             },
           });
         }
@@ -258,6 +264,8 @@ export default function initGamesController(db) {
             cardDeck: game.gameState.cardDeck,
             player1Hand: game.gameState.player1Hand,
             player2Hand,
+            player1Name: game.gameState.player1Name,
+            player2Name: game.gameState.player2Name,
           },
         });
       }
@@ -270,6 +278,8 @@ export default function initGamesController(db) {
           id: game.id,
           player1Hand: game.gameState.player1Hand,
           nextPlayerTurn: playerTurn,
+          player1Name: game.gameState.player1Name,
+          player2Name: game.gameState.player2Name,
         });
       } else {
         response.send({
@@ -277,6 +287,8 @@ export default function initGamesController(db) {
           player1Hand: game.gameState.player1Hand,
           player2Hand: game.gameState.player2Hand,
           nextPlayerTurn: playerTurn,
+          player1Name: game.gameState.player1Name,
+          player2Name: game.gameState.player2Name,
         });
       }
     } catch (error) {

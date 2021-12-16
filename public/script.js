@@ -9,7 +9,10 @@ loginButton.classList.add('login-button');
 const signUpButton = document.createElement('button');
 const message = document.createElement('div');
 const createGameBtn = document.createElement('button');
+const player1Display = document.createElement('div');
+const player2Display = document.createElement('div');
 
+let nextPlayerTurn = 0;
 // Make request to database from browser for: Sign up
 const signUpDb = () => {
   const data = {
@@ -83,9 +86,10 @@ const getPlayerToLogin = () => {
 // DOM manipulation function that displays the player's current hand.
 const runGame = function (playerHand) {
   // manipulate DOM
-  const gameContainer = document.querySelector('#game-container');
-
-  gameContainer.innerText = `
+  const p1GameContainer = document.querySelector('.player1-cards');
+  const p2GameContainer = document.querySelector('.player2-cards');
+  if (nextPlayerTurn === 2) {
+    p1GameContainer.innerText = `
     Your Hand:
     ====
     ${playerHand[0].name}
@@ -96,6 +100,23 @@ const runGame = function (playerHand) {
     of
     ${playerHand[1].suit}
   `;
+    player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please wait!`;
+    player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please draw a card!`;
+  } else {
+    p2GameContainer.innerText = `
+    Your Hand:
+    ====
+    ${playerHand[0].name}
+    of
+    ${playerHand[0].suit}
+    ====
+    ${playerHand[1].name}
+    of
+    ${playerHand[1].suit}
+  `;
+    player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please draw a card!`;
+    player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please wait!`;
+  }
 };
 
 // make a request to the server
@@ -107,8 +128,9 @@ const dealCards = function () {
       // get the updated hand value
       currentGame = response.data;
       console.log(currentGame);
+      nextPlayerTurn = currentGame.nextPlayerTurn;
 
-      if (currentGame.nextPlayerTurn === 2) {
+      if (nextPlayerTurn === 2) {
         // display cards to user
         runGame(currentGame.player1Hand);
       } else {
@@ -141,9 +163,9 @@ const createGame = function () {
       document.body.appendChild(dealBtn);
 
       // Show player names + instructions
-      const player1Display = document.createElement('div');
+      // const player1Display = document.createElement('div');
       player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please draw a card!`;
-      const player2Display = document.createElement('div');
+      // const player2Display = document.createElement('div');
       player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please wait!`;
       document.body.appendChild(player1Display);
       document.body.appendChild(player2Display);
