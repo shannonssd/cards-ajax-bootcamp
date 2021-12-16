@@ -12,6 +12,7 @@ import getHash from '../hashing.mjs';
  * ========================================================
  * ========================================================
  */
+
 let player1Name = '';
 let player2Name = '';
 let player1Id = 0;
@@ -123,11 +124,17 @@ const makeDeck = function () {
 
 export default function initGamesController(db) {
   const { Op } = db.Sequelize;
-  // render the main page
+
+  /* ======================================================
+ *                  Render the main page
+ * ======================================================== */
   const index = (request, response) => {
     response.render('games/index');
   };
 
+  /* ======================================================
+ *     Check for exisiting user, else create new user
+ * ======================================================== */
   const signUp = async (request, response) => {
     const { email } = request.body;
     const { password } = request.body;
@@ -138,35 +145,37 @@ export default function initGamesController(db) {
         email,
       },
     });
-
-    console.log('checkIfUserExists:', checkIfUserExists);
-
+    // If no such username in database, create new one
     if (checkIfUserExists === null) {
-      const newUser = await db.User.create({
+      await db.User.create({
         email,
         password: hashedPassword,
       });
       response.send('Success!');
     } else {
+      // Else inform user that username already exists
       response.send('User exists');
     }
   };
 
+  /* ======================================================
+ *                Verify login details and login
+ * ======================================================== */
   const login = async (request, response) => {
     player1Name = request.body.email;
     const { password } = request.body;
     const hashedPassword = getHash(password);
-    console.log(request);
     const checkUser = await db.User.findOne({
       where: {
         email: player1Name,
         password: hashedPassword,
       },
     });
-    console.log('checkUser:', checkUser);
+    // If no such username + password combo, inform user
     if (checkUser === null) {
       response.send('Invalid login');
     } else {
+      // Inform player if successful and send cookies
       player1Id = checkUser.id;
       response.cookie('loggedInHash', hashedPassword);
       response.cookie('userId', player1Name);
@@ -174,10 +183,11 @@ export default function initGamesController(db) {
     }
   };
 
-  // 1. Create new game is game table
-  // 2. Add second player // If no other player in DB used non-logged in player
-  // 3. Add users to join table
-
+  /* ======================================================
+ * // 1. Create new game in game table
+   // 2. Add second player. If no other player in DB used non-logged in player
+   // 3. Add users to join table
+ * ======================================================== */
   const create = async (request, response) => {
     // Find list of all other users
     const otherUsers = await db.User.findAll({
@@ -234,10 +244,11 @@ export default function initGamesController(db) {
     }
   };
 
-  // 1. Deal cards to player
-  // 2. Switch player
-  // 3. Evaluate winner after p2 gets cards
-  // 4. Change back to player 1
+  /* ======================================================
+   // 1. Switch player
+ * // 2. Deal cards to player
+   // 3. Account for first ever round where p2 has no cards
+ * ======================================================== */
   const deal = async (request, response) => {
     try {
       // get the game by the ID passed in the request
@@ -307,6 +318,9 @@ export default function initGamesController(db) {
     }
   };
 
+  /* ======================================================
+ *          Determine player with higher rank
+ * ======================================================== */
   const evaluate = async (request, response) => {
     try {
       // get the game by the ID passed in the request

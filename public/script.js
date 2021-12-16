@@ -1,7 +1,19 @@
-// global value that holds info about the current hand.
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *                  Global Variables
+ *
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ */
+
+// global value that holds info about the current game.
 let currentGame = null;
 
-// Initialise global elements so that they can be accessed in different functions
 let email = '';
 let password = '';
 const loginButton = document.createElement('button');
@@ -13,16 +25,27 @@ const player1Display = document.createElement('div');
 player1Display.classList.add('display');
 const player2Display = document.createElement('div');
 player2Display.classList.add('display');
-
 let nextPlayerTurn = 0;
-// Make request to database from browser for: Sign up
+
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *    Make request to database from browser for: Sign up
+ *
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ */
+
 const signUpDb = () => {
   const data = {
     email: email.value,
     password: password.value,
   };
   axios.post('/signup', data).then((response) => {
-    console.log('Signup successful', response);
     if (response.data === 'Success!') {
       email.value = '';
       password.value = '';
@@ -40,14 +63,25 @@ const signUpDb = () => {
   });
 };
 
-// Make request to database from browser for: Login
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *    Make request to database from browser for: Login
+ *
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ */
+
 const loginDb = () => {
   const data = {
     email: email.value,
     password: password.value,
   };
   axios.post('/login', data).then((response) => {
-    console.log('Login successful', response);
     if (response.data === 'Invalid login') {
       email.value = '';
       password.value = '';
@@ -69,7 +103,18 @@ const loginDb = () => {
   });
 };
 
-// Show login / signup functionality when first on page
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *   Show login / signup functionality when page first loads
+ *
+ * ========================================================
+ * ========================================================
+ */
+
 const getPlayerToLogin = () => {
   email = document.createElement('input');
   email.placeholder = 'Email';
@@ -86,14 +131,25 @@ const getPlayerToLogin = () => {
   document.body.appendChild(loginButton);
 };
 
-// DOM manipulation function that displays the player's current hand.
-const runGame = function (playerHand) {
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *         Display current hand
+ *
+ * ========================================================
+ * ========================================================
+ */
+
+const runGame = function (playerHand, name) {
   // manipulate DOM
   const p1GameContainer = document.querySelector('.player1-cards');
   const p2GameContainer = document.querySelector('.player2-cards');
   if (nextPlayerTurn === 2) {
     p1GameContainer.innerText = `
-    Your Hand:
+    Player 1: \n ${name}'s Hand:
     ====
     ${playerHand[0].name} of ${playerHand[0].suit}
     ====
@@ -103,7 +159,7 @@ const runGame = function (playerHand) {
     player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please draw a card!`;
   } else {
     p2GameContainer.innerText = `
-    Your Hand:
+     Player 2: \n ${name}'s Hand:
     ====
     ${playerHand[0].name} of ${playerHand[0].suit}
     ====
@@ -114,6 +170,18 @@ const runGame = function (playerHand) {
   }
 };
 
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *                    Evaluate Winner
+ *
+ * ========================================================
+ * ========================================================
+ */
+
 const evaluateResults = function () {
   axios.get(`/result/${currentGame.id}`).then((response) => {
     // get the updated hand value
@@ -123,23 +191,31 @@ const evaluateResults = function () {
   });
 };
 
-// make a request to the server
-// to change the deck.
-// set 2 new cards into the player hand.
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *             Server request:  Deal cards
+ *
+ * ========================================================
+ * ========================================================
+ */
+
 const dealCards = function () {
   axios.put(`/games/${currentGame.id}/deal`)
     .then((response) => {
       // get the updated hand value
       currentGame = response.data;
-      console.log(currentGame);
       nextPlayerTurn = currentGame.nextPlayerTurn;
 
       if (nextPlayerTurn === 2) {
         // display cards to user
-        runGame(currentGame.player1Hand);
+        runGame(currentGame.player1Hand, currentGame.player1Name);
       } else {
         // display cards to user
-        runGame(currentGame.player2Hand);
+        runGame(currentGame.player2Hand, currentGame.player2Name);
       }
     })
     .catch((error) => {
@@ -147,6 +223,18 @@ const dealCards = function () {
       console.log(error);
     });
 };
+
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *            Server request: Create new game
+ *
+ * ========================================================
+ * ========================================================
+ */
 
 const createGame = function () {
   // Make a request to create a new game
@@ -156,8 +244,6 @@ const createGame = function () {
 
       // set the global value to the new game.
       currentGame = response.data;
-
-      console.log(currentGame);
 
       // Create button to deal cards
       const dealBtn = document.createElement('button');
@@ -171,14 +257,12 @@ const createGame = function () {
 
       // results button
       const resultsBtn = document.createElement('button');
-      resultsBtn.innerText = 'Refresh';
+      resultsBtn.innerText = 'Current Winner';
       buttonDiv.appendChild(resultsBtn);
       resultsBtn.addEventListener('click', evaluateResults);
 
       // Show player names + instructions
-      // const player1Display = document.createElement('div');
       player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please draw a card!`;
-      // const player2Display = document.createElement('div');
       player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please wait!`;
       document.body.appendChild(player1Display);
       document.body.appendChild(player2Display);
@@ -192,5 +276,16 @@ const createGame = function () {
 // Button to create game
 createGameBtn.addEventListener('click', createGame);
 
-// First thing that loads on page
+/*
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ * ========================================================
+ *
+ *          Generate login / signup input bars
+ *
+ * ========================================================
+ * ========================================================
+ */
+
 getPlayerToLogin();
