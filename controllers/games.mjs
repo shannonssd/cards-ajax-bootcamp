@@ -1,3 +1,10 @@
+import getHash from '../hashing.mjs';
+
+let player1Name = '';
+let player2Name = '';
+let player1Id = 0;
+let player2Id = 0;
+let isP2loggedIn = false;
 /*
  * ========================================================
  * ========================================================
@@ -15,7 +22,6 @@
 const getRandomIndex = function (size) {
   return Math.floor(Math.random() * size);
 };
-
 // cards is an array of card objects
 const shuffleCards = function (cards) {
   let currentIndex = 0;
@@ -102,42 +108,125 @@ const makeDeck = function () {
  */
 
 export default function initGamesController(db) {
+  const { Op } = db.Sequelize;
   // render the main page
   const index = (request, response) => {
     response.render('games/index');
   };
 
-  // create a new game. Insert a new row in the DB.
+  const signUp = async (request, response) => {
+    const { email } = request.body;
+    const { password } = request.body;
+    const hashedPassword = getHash(password);
+
+    const checkIfUserExists = await db.User.findOne({
+      where: {
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    console.log('checkIfUserExists:', checkIfUserExists);
+
+    if (checkIfUserExists === null) {
+      const newUser = await db.User.create({
+        email,
+        password: hashedPassword,
+      });
+      response.send('Success!');
+    } else {
+      response.send('User exists');
+    }
+  };
+
+  const login = async (request, response) => {
+    player1Name = request.body.email;
+    const { password } = request.body;
+    const hashedPassword = getHash(password);
+    console.log(request);
+    const checkUser = await db.User.findOne({
+      where: {
+        email: player1Name,
+        password: hashedPassword,
+      },
+    });
+    console.log('checkUser:', checkUser);
+    if (checkUser === null) {
+      response.send('Invalid login');
+    } else {
+      player1Id = checkUser.id;
+      response.cookie('loggedInHash', hashedPassword);
+      response.cookie('userId', player1Name);
+      response.send('Logged in!');
+    }
+  };
+
+  // 1. Create new game is game table
+  // 2. Add second player // If no other player in DB used non-logged in player
+  // 3. Add users to join table
+
   const create = async (request, response) => {
+    // Find list of all other users
+    const otherUsers = await db.User.findAll({
+      where: {
+        email: {
+          [Op.ne]: player1Name,
+        },
+      },
+    });
+    // Assign player 2
+    if (otherUsers === null) {
+      player2Name = 'NON-LOGGED IN P2';
+    } else {
+      isP2loggedIn = true;
+      const player2 = otherUsers[getRandomIndex(otherUsers.length)];
+      player2Id = player2.id;
+      player2Name = player2.email;
+    }
+    console.log('THIS ARE OTHER USERS:', player2Name);
+
     // deal out a new shuffled deck for this game.
     const cardDeck = shuffleCards(makeDeck());
-    const playerHand = [cardDeck.pop(), cardDeck.pop()];
 
     const newGame = {
       gameState: {
         cardDeck,
-        playerHand,
       },
     };
 
     try {
-      // run the DB INSERT query
+      // Create new game in DB
       const game = await db.Game.create(newGame);
-
+      // Create new entry in join table
+      await db.UserGame.create({
+        gameId: game.id,
+        userId: player1Id,
+      });
+      // If P2 logged in, create new entry in join table
+      if (isP2loggedIn === true) {
+        await db.UserGame.create({
+          gameId: game.id,
+          userId: player2Id,
+        });
+      }
       // send the new game back to the user.
       // dont include the deck so the user can't cheat
       response.send({
         id: game.id,
-        playerHand: game.gameState.playerHand,
       });
     } catch (error) {
       response.status(500).send(error);
     }
   };
 
-  // deal two new cards from the deck.
+  // 1. Deal cards to player
+  // 2. Switch player
+  // 3. Evaluate winner after p2 gets cards
+  // 4. Change back to player 1
   const deal = async (request, response) => {
     try {
+      // const player1Hand = [cardDeck.pop(), cardDeck.pop()];
+      // const player2Hand = [cardDeck.pop(), cardDeck.pop()];
       // get the game by the ID passed in the request
       const game = await db.Game.findByPk(request.params.id);
 
@@ -170,5 +259,7 @@ export default function initGamesController(db) {
     deal,
     create,
     index,
+    signUp,
+    login,
   };
 }

@@ -1,13 +1,16 @@
-export default function gameModel(sequelize, DataTypes) {
-  return sequelize.define('game', {
+export default function userModel(sequelize, DataTypes) {
+  return sequelize.define('user', {
     id: {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    gameState: {
-      type: DataTypes.JSON,
+    email: {
+      type: DataTypes.STRING,
+    },
+    password: {
+      type: DataTypes.STRING,
     },
     createdAt: {
       allowNull: false,
@@ -19,6 +22,7 @@ export default function gameModel(sequelize, DataTypes) {
     },
   },
   {
+    // The underscored option makes Sequelize reference snake_case names in the DB.
     underscored: true,
   });
 }
