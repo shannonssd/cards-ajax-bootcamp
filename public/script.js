@@ -81,7 +81,7 @@ const getPlayerToLogin = () => {
 };
 
 // DOM manipulation function that displays the player's current hand.
-const runGame = function ({ playerHand }) {
+const runGame = function (playerHand) {
   // manipulate DOM
   const gameContainer = document.querySelector('#game-container');
 
@@ -106,9 +106,15 @@ const dealCards = function () {
     .then((response) => {
       // get the updated hand value
       currentGame = response.data;
+      console.log(currentGame);
 
-      // display it to the user
-      runGame(currentGame);
+      if (currentGame.nextPlayerTurn === 2) {
+        // display cards to user
+        runGame(currentGame.player1Hand);
+      } else {
+        // display cards to user
+        runGame(currentGame.player2Hand);
+      }
     })
     .catch((error) => {
       // handle error
@@ -120,20 +126,27 @@ const createGame = function () {
   // Make a request to create a new game
   axios.post('/games')
     .then((response) => {
+      document.body.removeChild(createGameBtn);
+
       // set the global value to the new game.
       currentGame = response.data;
 
       console.log(currentGame);
 
-      // for this current game, create a button that will allow the user to
-      // manipulate the deck that is on the DB.
-      // Create a button for it.
+      // Create button to deal cards
       const dealBtn = document.createElement('button');
       dealBtn.addEventListener('click', dealCards);
-
       // display the button
       dealBtn.innerText = 'Deal';
       document.body.appendChild(dealBtn);
+
+      // Show player names + instructions
+      const player1Display = document.createElement('div');
+      player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please draw a card!`;
+      const player2Display = document.createElement('div');
+      player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please wait!`;
+      document.body.appendChild(player1Display);
+      document.body.appendChild(player2Display);
     })
     .catch((error) => {
       // handle error
@@ -141,8 +154,8 @@ const createGame = function () {
     });
 };
 
-// manipulate DOM, set up create game button
+// Button to create game
 createGameBtn.addEventListener('click', createGame);
 
-// First thing that loads
+// First thing that loads on page
 getPlayerToLogin();

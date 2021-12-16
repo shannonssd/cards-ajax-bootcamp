@@ -5,6 +5,8 @@ let player2Name = '';
 let player1Id = 0;
 let player2Id = 0;
 let isP2loggedIn = false;
+let playerTurn = 1;
+let isFirstTurn = true;
 /*
  * ========================================================
  * ========================================================
@@ -183,8 +185,6 @@ export default function initGamesController(db) {
       player2Id = player2.id;
       player2Name = player2.email;
     }
-    console.log('THIS ARE OTHER USERS:', player2Name);
-
     // deal out a new shuffled deck for this game.
     const cardDeck = shuffleCards(makeDeck());
 
@@ -213,6 +213,8 @@ export default function initGamesController(db) {
       // dont include the deck so the user can't cheat
       response.send({
         id: game.id,
+        player1Name,
+        player2Name,
       });
     } catch (error) {
       response.status(500).send(error);
@@ -225,29 +227,58 @@ export default function initGamesController(db) {
   // 4. Change back to player 1
   const deal = async (request, response) => {
     try {
-      // const player1Hand = [cardDeck.pop(), cardDeck.pop()];
-      // const player2Hand = [cardDeck.pop(), cardDeck.pop()];
       // get the game by the ID passed in the request
       const game = await db.Game.findByPk(request.params.id);
-
-      // make changes to the object
-      const playerHand = [game.gameState.cardDeck.pop(), game.gameState.cardDeck.pop()];
-
-      // update the game with the new info
-      await game.update({
-        gameState: {
-          cardDeck: game.gameState.cardDeck,
-          playerHand,
-        },
-
-      });
+      if (playerTurn === 1) {
+        playerTurn = 2;
+        const player1Hand = [game.gameState.cardDeck.pop(), game.gameState.cardDeck.pop()];
+        // update the game with the new info
+        if (isFirstTurn === true) {
+          await game.update({
+            gameState: {
+              cardDeck: game.gameState.cardDeck,
+              player1Hand,
+            },
+          });
+        } else {
+          await game.update({
+            gameState: {
+              cardDeck: game.gameState.cardDeck,
+              player1Hand,
+              player2Hand: game.gameState.player2Hand,
+            },
+          });
+        }
+      } else {
+        playerTurn = 1;
+        const player2Hand = [game.gameState.cardDeck.pop(), game.gameState.cardDeck.pop()];
+        // update the game with the new info
+        await game.update({
+          gameState: {
+            cardDeck: game.gameState.cardDeck,
+            player1Hand: game.gameState.player1Hand,
+            player2Hand,
+          },
+        });
+      }
 
       // send the updated game back to the user.
       // dont include the deck so the user can't cheat
-      response.send({
-        id: game.id,
-        playerHand: game.gameState.playerHand,
-      });
+      if (isFirstTurn === true) {
+        isFirstTurn = false;
+        response.send({
+          id: game.id,
+          player1Hand: game.gameState.player1Hand,
+          nextPlayerTurn: playerTurn,
+        });
+      } else {
+        response.send({
+          id: game.id,
+          player1Hand: game.gameState.player1Hand,
+          player2Hand: game.gameState.player2Hand,
+          nextPlayerTurn: playerTurn,
+        });
+      }
     } catch (error) {
       response.status(500).send(error);
     }

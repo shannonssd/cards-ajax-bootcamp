@@ -18,7 +18,6 @@ db.Game = gameModel(sequelize, Sequelize.DataTypes);
 db.User = userModel(sequelize, Sequelize.DataTypes);
 db.UserGame = gameUserModel(sequelize, Sequelize.DataTypes);
 
-// const UserGame = sequelize.define('game_user');
 db.Game.belongsToMany(db.User, { through: 'game_user' });
 db.User.belongsToMany(db.Game, { through: 'game_user' });
 
