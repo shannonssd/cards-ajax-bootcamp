@@ -124,7 +124,6 @@ export default function initGamesController(db) {
     const checkIfUserExists = await db.User.findOne({
       where: {
         email,
-        password: hashedPassword,
       },
     });
 
@@ -296,6 +295,36 @@ export default function initGamesController(db) {
     }
   };
 
+  const evaluate = async (request, response) => {
+    try {
+      // get the game by the ID passed in the request
+      const game = await db.Game.findByPk(request.params.id);
+      const player1FinalHand = game.gameState.player1Hand;
+      const player2FinalHand = game.gameState.player2Hand;
+      const p1Highest = Math.max(player1FinalHand[0].rank, player1FinalHand[1].rank);
+      const p2Highest = Math.max(player2FinalHand[0].rank, player2FinalHand[1].rank);
+      let winner = '';
+      if (p1Highest > p2Highest) {
+        winner = `${game.gameState.player1Name} wins!`;
+      } else if (p1Highest < p2Highest) {
+        winner = `${game.gameState.player2Name} wins!`;
+      } else {
+        winner = 'Draw!';
+      }
+
+      response.send({
+        id: game.id,
+        player1Hand: game.gameState.player1Hand,
+        player2Hand: game.gameState.player2Hand,
+        nextPlayerTurn: playerTurn,
+        player1Name: game.gameState.player1Name,
+        player2Name: game.gameState.player2Name,
+        winner,
+      });
+    } catch (error) {
+      response.status(500).send(error);
+    }
+  };
   // return all functions we define in an object
   // refer to the routes file above to see this used
   return {
@@ -304,5 +333,6 @@ export default function initGamesController(db) {
     index,
     signUp,
     login,
+    evaluate,
   };
 }

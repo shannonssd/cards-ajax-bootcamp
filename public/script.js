@@ -10,7 +10,9 @@ const signUpButton = document.createElement('button');
 const message = document.createElement('div');
 const createGameBtn = document.createElement('button');
 const player1Display = document.createElement('div');
+player1Display.classList.add('display');
 const player2Display = document.createElement('div');
+player2Display.classList.add('display');
 
 let nextPlayerTurn = 0;
 // Make request to database from browser for: Sign up
@@ -72,6 +74,7 @@ const getPlayerToLogin = () => {
   email = document.createElement('input');
   email.placeholder = 'Email';
   password = document.createElement('input');
+  password.setAttribute('type', 'password');
   password.placeholder = 'Password';
   loginButton.innerText = 'login';
   signUpButton.innerText = 'signup';
@@ -92,13 +95,9 @@ const runGame = function (playerHand) {
     p1GameContainer.innerText = `
     Your Hand:
     ====
-    ${playerHand[0].name}
-    of
-    ${playerHand[0].suit}
+    ${playerHand[0].name} of ${playerHand[0].suit}
     ====
-    ${playerHand[1].name}
-    of
-    ${playerHand[1].suit}
+    ${playerHand[1].name} of ${playerHand[1].suit}
   `;
     player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please wait!`;
     player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please draw a card!`;
@@ -106,17 +105,22 @@ const runGame = function (playerHand) {
     p2GameContainer.innerText = `
     Your Hand:
     ====
-    ${playerHand[0].name}
-    of
-    ${playerHand[0].suit}
+    ${playerHand[0].name} of ${playerHand[0].suit}
     ====
-    ${playerHand[1].name}
-    of
-    ${playerHand[1].suit}
+    ${playerHand[1].name} of ${playerHand[1].suit}
   `;
     player1Display.innerHTML = `Player 1: ${currentGame.player1Name} please draw a card!`;
     player2Display.innerHTML = `Player 2: ${currentGame.player2Name} please wait!`;
   }
+};
+
+const evaluateResults = function () {
+  axios.get(`/result/${currentGame.id}`).then((response) => {
+    // get the updated hand value
+    currentGame = response.data;
+    player1Display.innerHTML = `${currentGame.winner}`;
+    player2Display.innerHTML = '';
+  });
 };
 
 // make a request to the server
@@ -157,10 +161,19 @@ const createGame = function () {
 
       // Create button to deal cards
       const dealBtn = document.createElement('button');
+      const buttonDiv = document.createElement('div');
+      buttonDiv.classList.add('display');
       dealBtn.addEventListener('click', dealCards);
       // display the button
       dealBtn.innerText = 'Deal';
-      document.body.appendChild(dealBtn);
+      buttonDiv.appendChild(dealBtn);
+      document.body.appendChild(buttonDiv);
+
+      // results button
+      const resultsBtn = document.createElement('button');
+      resultsBtn.innerText = 'Refresh';
+      buttonDiv.appendChild(resultsBtn);
+      resultsBtn.addEventListener('click', evaluateResults);
 
       // Show player names + instructions
       // const player1Display = document.createElement('div');
